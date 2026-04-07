@@ -74,9 +74,11 @@ export const data = new SlashCommandBuilder()
 async function autocompleteRepo(focused: string): Promise<{ name: string; value: string }[]> {
   if (!repoCache.get()) {
     try {
-      repoCache.set(await listRepos());
-    } catch {
-      // use stale cache
+      const fetched = await listRepos();
+      logger.info({ count: fetched.length, repos: fetched }, 'Fetched repos from GitHub');
+      repoCache.set(fetched);
+    } catch (err) {
+      logger.error({ err }, 'Failed to fetch repos from GitHub');
     }
   }
 
@@ -98,8 +100,8 @@ async function autocompleteLabels(repoInput: string, focused: string): Promise<{
   if (!cache.get()) {
     try {
       cache.set(await listLabels(owner, repo));
-    } catch {
-      // use stale cache
+    } catch (err) {
+      logger.error({ err, repo: `${owner}/${repo}` }, 'Failed to fetch labels from GitHub');
     }
   }
 
